@@ -10,6 +10,7 @@ import {
   type ParsedExpense,
 } from '@/lib/moneyData';
 import { listen } from '@/lib/speech';
+import { saveRecord } from '@/lib/records';
 
 type Props = {
   db: any;
@@ -68,6 +69,20 @@ export default function MoneyQuickModal({ db, onClose, onSaved }: Props) {
       return;
     }
     const total = addMoney(list);
+    void saveRecord('money', {
+      asr_text: text.trim(),
+      parsed_data: {
+        kind: 'money',
+        items: list.map((x) => ({
+          note: x.note,
+          amt: x.amt,
+          cat: x.cat,
+          catName: cats.find((c) => c.k === x.cat)?.n || '其他',
+        })),
+        count: list.length,
+        total,
+      },
+    });
     onSaved(list.length, total);
     onClose();
   };

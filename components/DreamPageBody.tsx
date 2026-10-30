@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { listen } from '@/lib/speech';
 import { aiCall } from '@/lib/ai';
 import { readStory } from '@/lib/storyStore';
+import { saveRecord } from '@/lib/records';
 import { addDays, cnDate, daysBetween, todayISO } from '@/lib/moneyData';
 import {
   DREAM_TYPES,
@@ -163,6 +164,10 @@ export default function DreamPageBody() {
                       return;
                     }
                     addIdea(dreamType, v);
+                    void saveRecord('dream', {
+                      asr_text: v,
+                      parsed_data: { kind: 'dream', text: v, type: dreamType },
+                    });
                     setIdeaText('');
                     reload();
                     toast('收进梦里了');

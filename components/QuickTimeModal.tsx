@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { cnDate, parseTasks } from '@/lib/timeTasks';
 import { addTimeTasks, getVoiceMode } from '@/lib/storyStore';
 import { listen } from '@/lib/speech';
+import { saveRecord } from '@/lib/records';
 
 export type QuickTimePayload = {
   kind: 'plan' | 'actual';
@@ -53,6 +54,15 @@ export default function QuickTimeModal({ payload, onClose }: Props) {
       setHint('本地数据还没准备好，刷新页面再试');
       return;
     }
+    void saveRecord('time', {
+      asr_text: value,
+      parsed_data: {
+        kind: 'time',
+        tasks,
+        count: tasks.length,
+        totalMin: tasks.reduce((s, t) => s + t.min, 0),
+      },
+    });
     const more = tasks.length > 1 ? ` 等 ${tasks.length} 条` : '';
     payload.refresh(
       date,

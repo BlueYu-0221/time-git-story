@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { aiCall } from '@/lib/ai';
 import { listen } from '@/lib/speech';
 import { readStory, writeStory } from '@/lib/storyStore';
+import { saveRecord } from '@/lib/records';
 import { cnDate, todayISO } from '@/lib/moneyData';
 import {
   DEF_MOODS,
@@ -144,6 +145,10 @@ export default function MoodPageBody({ onReport }: { onReport: () => void }) {
       text: v || '(只有一张照片)',
       mood: moodPick,
       photo: photo || '',
+    });
+    void saveRecord('mood', {
+      asr_text: v,
+      parsed_data: { kind: 'mood', text: v, mood: moodPick || null },
     });
     setText('');
     setPhoto('');
