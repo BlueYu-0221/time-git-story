@@ -117,7 +117,7 @@ export async function POST(req: Request) {
               system +
               '\n' +
               STYLE_SYS[styleKey] +
-              '\n请用中文回答，不要使用 markdown 标题符号，直接给出成段文字。',
+              '\n用中文回答。如果系统提示要求输出 JSON，就只输出严格 JSON，不要 markdown、不要代码块；否则直接给出成段文字，不要使用 markdown 标题符号。',
           },
           { role: 'user', content: user },
         ],
