@@ -7193,7 +7193,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/open-next.config.mjs": {
-      "bytes": 7011,
+      "bytes": 6848,
       "imports": [],
       "format": "esm"
     },

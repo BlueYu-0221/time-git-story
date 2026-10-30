@@ -1,0 +1,7 @@
+name = "time-git-story"
+main = ".open-next/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+OPENNEXT_DISABLE_SELF_BINDING = "true"
