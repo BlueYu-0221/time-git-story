@@ -6,6 +6,7 @@ import {
   fallbackInsight,
 } from '@/lib/audioModes';
 import { AsrError, recognizeAudio } from '@/lib/server/tencentAsr';
+import { createRecord, readSessionId } from '@/lib/server/supabase';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -125,14 +126,36 @@ export async function POST(req: Request) {
   const parsed = parseByMode(mode, text);
   const prompt = insightPrompt(mode, text, parsed);
   const aiText = await askAI(prompt.system, prompt.user);
+  const insight = aiText || fallbackInsight(mode, parsed);
+
+  // 识别完成后落库；写库失败不影响本次识别结果返回
+  const sessionId = readSessionId(req);
+  let recordId: string | null = null;
+  if (sessionId) {
+    try {
+      const record = await createRecord({
+        session_id: sessionId,
+        mode,
+        audio_url: null,
+        asr_text: text,
+        parsed_data: parsed,
+        insight_text: insight,
+      });
+      recordId = record.id;
+    } catch (e) {
+      console.error('[parse-audio] persist failed', e);
+    }
+  }
 
   return NextResponse.json({
     ok: true,
     mode,
     text,
     parsed,
-    insight: aiText || fallbackInsight(mode, parsed),
+    insight,
+    recordId,
     meta: {
+      persisted: Boolean(recordId),
       audioFormat: format,
       audioBytes: audio.byteLength,
       durationSec,
