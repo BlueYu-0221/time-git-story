@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "opennext:build": "opennextjs-cloudflare build",
+    "opennext:deploy": "opennextjs-cloudflare deploy",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "preview": "opennextjs-cloudflare preview",
     "start": "next start"
   },
   "dependencies": {
