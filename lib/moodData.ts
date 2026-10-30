@@ -9,6 +9,8 @@ export type MoodEntry = {
   text: string;
   mood: string;
   photo: string;
+  /** Supabase images 桶里的公网 URL；本地 localStorage 仍是主显示源 */
+  photo_url?: string;
 };
 
 export type MoodCat = { k: string; c: string };
@@ -117,6 +119,15 @@ export function addMood(entry: MoodEntry) {
   if (!db) return;
   if (!Array.isArray(db.mood)) db.mood = [];
   db.mood.push(entry);
+  writeStory(db);
+}
+
+export function setMoodPhotoUrl(id: string, url: string) {
+  const db: any = readStory();
+  if (!db) return;
+  const hit = (db.mood || []).find((e: MoodEntry) => e.id === id);
+  if (!hit) return;
+  hit.photo_url = url;
   writeStory(db);
 }
 

@@ -7,6 +7,7 @@ import {
 } from '@/lib/audioModes';
 import { AsrError, recognizeAudio } from '@/lib/server/tencentAsr';
 import { createRecord, readSessionId } from '@/lib/server/supabase';
+import { AUDIO_BUCKET, objectPath, uploadPublic } from '@/lib/server/storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,6 +22,12 @@ function detectFormat(name: string, type: string): string {
   if (n.endsWith('.m4a') || n.endsWith('.mp4') || t.includes('mp4')) return 'm4a';
   return 'wav';
 }
+
+const AUDIO_MIME: Record<string, string> = {
+  mp3: 'audio/mpeg',
+  m4a: 'audio/mp4',
+  wav: 'audio/wav',
+};
 
 function bad(error: string, message: string, status: number) {
   return NextResponse.json({ error, message }, { status });
@@ -128,15 +135,27 @@ export async function POST(req: Request) {
   const aiText = await askAI(prompt.system, prompt.user);
   const insight = aiText || fallbackInsight(mode, parsed);
 
-  // 识别完成后落库；写库失败不影响本次识别结果返回
+  // 识别完成后先存音频再落库；任一步失败都不影响本次识别结果返回
   const sessionId = readSessionId(req);
   let recordId: string | null = null;
   if (sessionId) {
+    let audioUrl: string | null = null;
+    try {
+      audioUrl = await uploadPublic(
+        AUDIO_BUCKET,
+        objectPath(sessionId, format),
+        audio,
+        AUDIO_MIME[format] || 'application/octet-stream'
+      );
+    } catch (e) {
+      console.error('[parse-audio] audio upload failed', e);
+    }
+
     try {
       const record = await createRecord({
         session_id: sessionId,
         mode,
-        audio_url: null,
+        audio_url: audioUrl,
         asr_text: text,
         parsed_data: parsed,
         insight_text: insight,

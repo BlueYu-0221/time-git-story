@@ -5,6 +5,7 @@ import { aiCall } from '@/lib/ai';
 import { listen } from '@/lib/speech';
 import { readStory, writeStory } from '@/lib/storyStore';
 import { saveRecord } from '@/lib/records';
+import { uploadImage } from '@/lib/media';
 import { cnDate, todayISO } from '@/lib/moneyData';
 import {
   DEF_MOODS,
@@ -19,6 +20,7 @@ import {
   moodRange,
   renameMoodCat,
   saveEcho,
+  setMoodPhotoUrl,
   uid,
   type MoodEntry,
 } from '@/lib/moodData';
@@ -139,17 +141,23 @@ export default function MoodPageBody({ onReport }: { onReport: () => void }) {
       return;
     }
     const id = uid();
+    const localPhoto = photo;
     addMood({
       id,
       date: todayISO(),
       text: v || '(只有一张照片)',
       mood: moodPick,
-      photo: photo || '',
+      photo: localPhoto,
     });
-    void saveRecord('mood', {
-      asr_text: v,
-      parsed_data: { kind: 'mood', text: v, mood: moodPick || null },
-    });
+    // 本地先存，图片在后台传到 images 桶；失败只告警，不影响已经保存的内容
+    void (async () => {
+      const photoUrl = localPhoto ? await uploadImage(localPhoto) : null;
+      if (photoUrl) setMoodPhotoUrl(id, photoUrl);
+      await saveRecord('mood', {
+        asr_text: v,
+        parsed_data: { kind: 'mood', text: v, mood: moodPick || null, photo_url: photoUrl },
+      });
+    })();
     setText('');
     setPhoto('');
     reload();
